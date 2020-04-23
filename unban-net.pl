@@ -16,3 +16,13 @@ close BLACKLIST;
 foreach my $line (reverse @unused) {
 	print 'iptables -D ' . CHAIN . " $line\n";
 }
+
+__END__
+
+Copyright (c) 2017-2020, Jörg Sommrey. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See L<http://dev.perl.org/licenses/> for more information.
