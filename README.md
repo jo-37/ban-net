@@ -18,7 +18,7 @@ iptables -N blacklist
 Jump to this chain from the INPUT chain, unconditional or for specific ports.
 (The latter has the advantage that these adresses remain accessible.)
 ```
-iptables -I INPUT -p tcp -m multiport --dports 20,21,22,25,110,143,465,587,998,990,993,995 -m state --state NEW -j blacklist
+iptables -I INPUT -p tcp -m multiport --dports ftp-data,ftp,ssh,smtp,pop3,imap2,urd,submission,ftps,imaps,pop3s -m state --state NEW -j blacklist
 ```
 Run the scripts `ban-net.pl` and `unban-net.pl` on a regular schedule, e.g. by cron:
 
@@ -29,3 +29,36 @@ PATH=/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/sbin
 14      1-19/6  *       *       *       root    ban-net.pl -interval="2 days"| sh
 ```
 Adjust values to your needs.
+### ban-net.pl
+This program performes the configured log file analysis and counts access
+violations per IP address.
+It does not modify entries in the blacklist chain but instead generates
+statements that need to be fed into a shell to do so.
+
+The program has three options:
+
+- __-from=__*datetime*
+
+    process log entries from the given time onwards.
+    
+- __-interval=__*interval*
+
+    process log entries from the given relative time interval
+    
+- __-list__
+
+    causes the program not to generate iptables statements.
+    Instead it gives a report about the current state and the actions that
+    woud be generated if called without __-list__
+    
+    It reports the address or subnet, a flag, the number of reported violations and
+    the number of reported subitems, if any.
+    
+    Flag is __t__ for an entry already present in the blacklist chain, __b__ for
+    an entry that would be generated and __p__ for an entry that has blacklisted
+    subentries.
+
+### unban-net.pl
+This program generates iptables commands to delete entries from the blacklist
+chain that have a packet counter of zero.
+A call to `iptables -Z blacklist` is required after `unban-net.pl` has been run.
