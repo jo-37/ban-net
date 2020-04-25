@@ -108,7 +108,10 @@ foreach my $conf (@conf) {
 		my $dt = $parser->parse_datetime($ts);
 		next if DateTime->compare($from_dt, $dt) == 1;
 		$hosts{$a0}{next}{$a1}{next}{$a2}{next}{$a3}{count}++;
-		$hosts{$a0}{next}{$a1}{next}{$a2}{next}{$a3}{lvl} = 4;
+		$hosts{$a0}{next}{$a1}{next}{$a2}{next}{$a3}{lvl} //= 3;
+		$hosts{$a0}{next}{$a1}{next}{$a2}{lvl} //= 2;
+		$hosts{$a0}{next}{$a1}{lvl} //= 1;
+		$hosts{$a0}{lvl} //= 0;
 	}
 	close FAIL2BAN;
 }
@@ -117,12 +120,14 @@ sub aggregate;
 sub aggregate {
 	my ($parent, $node) = @_;
 	aggregate $node, $_ foreach (values %{$node->{next}});
-	if (($node->{lvl}//0) == 4) {
+	if (($node->{lvl}//0) == 3) {
 		$node->{ban} = 1 if $node->{count} >= MIN_FAIL_HOST;
 		$parent->{count}++ if $parent && $node->{count} >= MIN_FAIL_NET;
 	} else {
-		$node->{ban} = 1 if ($node->{count}//0) >= MIN_FAIL_SUBNET;
-		$node->{ban} = 1 if ($node->{subfail}//0) >= MIN_FAIL_SUBCOUNT;
+		if ($node->{lvl}) {
+			$node->{ban} = 1 if ($node->{count}//0) >= MIN_FAIL_SUBNET;
+			$node->{ban} = 1 if ($node->{subfail}//0) >= MIN_FAIL_SUBCOUNT;
+		}
 		$parent->{count}++ if $node->{ban};
 		$parent->{subfail}++;
 	}
